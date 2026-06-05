@@ -67,10 +67,11 @@ The attack abuses that cooperative mechanism. The 802.11 control-frame
 Duration/ID field is 15 bits, so the maximum legal NAV is **32,767 µs**
 (~32.7 ms). At that value, an attacker only needs **~31 packets per
 second** (32.7 ms NAV * 31 packets ≈ 1 s) to keep neighboring stations
-muted indefinitely. The reference pcaps in this repo and `RTS.py`'s
-default actually use `0xFFFF` (65,535), which some chipsets accept; the
-spec-conformant value `0x7FFF` works on more hardware. Override with
-`-d/--duration` either way.
+muted indefinitely. `RTS.py` defaults to this spec-valid maximum
+(`0x7FFF`); the field only updates a receiver's NAV when bit 15 is 0, so
+values with bit 15 set (e.g. the `0xFFFF` in the reference pcaps) fall in
+reserved space and are ignored by spec-compliant stations — some chipsets
+honor them anyway, so pass `-d/--duration 0xFFFF` to try.
 
 Two delivery modes:
 
@@ -213,7 +214,8 @@ sudo python3 beacon.py -i wlan0mon -a 58:6d:8f:07:4e:8f -s voip -c 238
 
 ### `RTS.py` -- RTS/CTS NAV co-opting DoS
 
-Floods RTS or CTS frames carrying `Duration/ID = 0xFFFF`. Accepts a
+Floods RTS or CTS frames carrying a large `Duration/ID` (default
+`0x7FFF`, the largest spec-valid NAV). Accepts a
 single MAC or a comma-separated list; when multiple MACs are supplied
 the RA (CTS mode) or TA (RTS mode) is randomized per frame to broaden
 the NAV hold.
@@ -229,7 +231,7 @@ usage: RTS.py [-h] [-m {rts,cts}] [-a AP] -c CLIENT -i INTERFACE
 | `-a, --ap`        | AP MAC (RTS mode RA); ignored in CTS mode |
 | `-c, --client`    | one MAC or a comma-separated list. RTS: spoofed TA(s). CTS: victim RA(s) |
 | `-i, --interface` | monitor-mode interface on the target channel |
-| `-d, --duration`  | Duration/ID in microseconds (default 65535; SEC617 canonical value is 32767) |
+| `-d, --duration`  | Duration/ID in microseconds (default 32767 = `0x7FFF`, the SEC617 canonical value and largest spec-valid NAV; accepts up to 65535 for chipsets that honor bit-15-set values) |
 | `--interval`      | inter-frame interval, seconds (default 0.03 ≈ 33 pps, matches the "31 pps" rate from SEC617 p. 109) |
 | `--count`         | total frames to send (0 = until Ctrl-C) |
 | `-y, --yes`       | skip the prompt |

