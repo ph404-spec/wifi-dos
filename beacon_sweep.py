@@ -88,7 +88,7 @@ def parse_beacon(pkt) -> Optional[Target]:
     if ssid is None or channel is None:
         return None
 
-    privacy = bool(int(pkt[Dot11Beacon].cap) & 0x0010)
+    privacy = bool(pkt[Dot11Beacon].cap.privacy)
     return Target(bssid=bssid.lower(), ssid=ssid, channel=channel, privacy=privacy)
 
 
@@ -115,7 +115,7 @@ def filter_targets(targets, include, exclude, include_hidden):
     out = []
     for t in targets:
         name = t.ssid_display.lower()
-        if not include_hidden and not t.ssid.strip():
+        if not include_hidden and not t.ssid.strip(b"\x00 \t\r\n"):
             continue
         if include and not any(s.lower() in name for s in include):
             continue
