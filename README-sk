@@ -1,0 +1,51 @@
+#
+# framespam
+# Frame Spammer (c) 2007, Matej Sustr
+#
+#######################################
+
+Umoznuje posielat lubovolny "surovy" ramec cez IEEE 802.11 bezdrotovy
+sietovy adapter, v rezime monitor.
+
+
+#
+# Kompilacia a instalacia
+###########################
+
+	make
+	make install	(potrebne root prava)
+
+
+#
+# Pouzitie
+############
+
+Program vyzaduje na posielanie surovych ramcov root prava.
+
+	framespam -i <nazov> [-n <pocet>] [-d <pauza>] < subor
+
+-i <nazov>	Adapter pre posielanie ramcov, musi to byt wireless adapter
+		v monitorovacom rezime, s ovladacom, ktory v nom umoznuje
+		vysielanie.
+
+-n <pocet>	Posiela ramec <pocet> krat, ak hodnotu nezadame, posiela
+		ramce az do zastavenia.
+
+-d <pauza>	Pauza medzi odoslaniami, v mikrosekundach. Ak nie je zadane,
+		pouzije sa hodnota 10000.
+
+subor		Program nacitava ramec, ktory ma odosielat, zo standardneho
+		vstupu, ktory mozeme presmerovat pomocou "< subor".
+
+
+Program zastavime stlacenim Ctrl-C.
+
+
+#
+# Licencia
+############
+
+Tento softver je distribuovany pod licenciou GNU GPL v2, teda je s otvorenym
+zdrojovym kodom. Licencia v anglickom jazyku je v subore "COPYING",
+neoficialny cesky preklad je v subore "gnugpl-cz.html".
+

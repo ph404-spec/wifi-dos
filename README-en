@@ -1,0 +1,45 @@
+#
+# framespam
+# Frame Spammer (c) 2007, Matej Sustr
+#
+
+Allows to send an arbitrary raw frame using an IEEE 802.11 wireless card
+adapter in monitor mode.
+
+
+# Compilation and installation
+
+	make
+	make install	(requires root privileges)
+
+
+#
+# Usage
+#########
+
+You must be root to send raw frames.
+
+	framespam -i <ifname> [-n <num] [-d <delay>] < file
+
+-i <ifname>	Interface to send frames through, this must be a wireless
+		ethernet adapter in monitor mode, using an injection-enabled
+		driver.
+
+-n <num>	Send the frame <num> times, defaults to infinite.
+
+-d <delay>	Delay between sending frames in microseconds. Defaults to
+		10000.
+
+file		Program reads the frame to be sent using standard input,
+		which may be redirected from a file.
+
+Program may be terminated by pressing Ctrl-C.
+
+
+#
+# Licence
+############
+
+This software is released under the GNU GPL v2 licence, and thus is Open
+Source software. The licence can be found in the "COPYING" file.
+
